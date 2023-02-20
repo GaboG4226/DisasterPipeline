@@ -80,6 +80,12 @@ def clean_data(df):
     # Drop duplicates
     df = df.drop_duplicates()
     
+    # Drop columns that have complete zeros in all column
+    df = df.loc[:, (df != 0).any(axis=0)]
+    
+    # Drop rows that have a 2 on related column
+    df = df[df['related'] != 2]
+    
     return df
         
 
