@@ -39,18 +39,37 @@ model = joblib.load("../models/pipeline.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    # extract column names
+    class_list = df.columns[4:]
+
+    # list to store count of each column
+    values_list = []
+
+    # lists to get count of classifications by genre for graph 2
+    direct_list = []
+    news_list = []
+    social_list = []
+
+    # loop to get the count of rows of each column individually and by genre
+    for column in class_list:
+       values_list.append(df[df[column] == 1].count()[0])
+       direct_list.append(df[(df['related'] == 1) & (df['genre'] == 'direct')].count()[0])
+       news_list.append(df[(df['related'] == 1) & (df['genre'] == 'news')].count()[0])
+       social_list.append(df[(df['related'] == 1) & (df['genre'] == 'social')].count()[0])
+
+    
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
+        
+        # Graph 1 - Messages by gensre
         {
             'data': [
                 Bar(
-                    x=genre_names,
-                    y=genre_counts
+                    x = genre_names,
+                    y = genre_counts
                 )
             ],
 
@@ -63,7 +82,69 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        }, 
+
+        # Graph 2 - Messages by classification
+        {
+            'data': [
+                Bar(
+                    x = class_list,
+                    y = values_list
+                )
+            ],
+
+            'layout': {
+                'title':'Distribution of messages by classification',
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Classification',
+                    'titlefont': {
+                        # padding is not working for some reason
+                        'padding': '100'
+                    },
+                },
+            'barmode':'stack'
+            }
+        },
+
+        # Graph 3 - Messages of each classification by genre
+        {
+            'data': [
+                Bar(
+                    x = class_list,
+                    y = direct_list,
+                    name = 'Direct'
+                ),
+                Bar(
+                    x = class_list,
+                    y = news_list,
+                    name = 'News'
+                ),
+                Bar(
+                    x = class_list,
+                    y = social_list,
+                    name = 'Social'
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of messages by classification and genre',
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Classification',
+                    'titlefont': {
+                        # padding not working for some reason
+                        'padding': '100'
+                    },
+                },
+                'barmode': 'stack'
+            }
+        },
+
     ]
     
     # encode plotly graphs in JSON
@@ -78,7 +159,7 @@ def index():
 @app.route('/go')
 def go():
     # save user input in query
-    query = request.args.get('query', '') 
+    query = request.args.get('query', '')
 
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
