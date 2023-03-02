@@ -1,10 +1,11 @@
-import sys
+# import libraries
 
 # General libraries
 import pandas as pd
 import lazypredict
 import numpy as np
 import re
+import sys
 
 # Database libraries
 from sqlalchemy import create_engine
@@ -30,9 +31,8 @@ from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 
-# Best model for our data analysis
-from lazypredict.Supervised import LazyClassifier, LazyRegressor
-
+# Saving model
+import pickle
 
 def load_data(database_filepath):
     '''
@@ -46,13 +46,22 @@ def load_data(database_filepath):
     
     '''
     
+    database_filepath = 'sqlite:///' + database_filepath
+    
     # create connection to the sqlite database
-    engine = create_engine('sqlite:///disaster_pipeline.db')
+    engine = create_engine(database_filepath)
     
     # creation of dataframe with specific table from the database
     df = pd.read_sql('messages_categories', engine)
     
-    return df
+    # extract values to be used for training
+    X = df['message']
+    y = df.iloc[:,4:]
+    
+    # column categories extraction
+    category_names = y.columns
+    
+    return X, y, category_names
 
 
 def tokenize(text):
@@ -128,13 +137,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
         print the classification report by column name with the categories specified in the input
     '''
     # transform to dataframe to get classification_report by column
-    predicted_df = pd.DataFrame(model.predict(X_test), columns=Y_test.columns)
+    predicted_df = pd.DataFrame(model.predict(X_test), columns=category_names)
 
     # loop to get report by column
     for column in Y_test.columns:
         
         # creation and printing of report
-        report = classification_report(y_test[column], predicted_df[column], target_names=category_names, zero_division=0)
+        report = classification_report(Y_test[column], predicted_df[column], target_names=['class 0', 'class 1'], zero_division=0)
         print("\n Classification [Original] report for column '{}': \n {}".format(column, report))
 
 
@@ -151,7 +160,7 @@ def save_model(model, model_filepath):
         model saved in a .pkl file in the specified filepath
     '''
     
-    pickle.dump(pipeline, open('pipeline.pkl', 'wb'))
+    pickle.dump(model, open('pipeline.pkl', 'wb'))
 
 
 def main():
