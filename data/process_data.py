@@ -10,7 +10,7 @@ def load_data(messages_filepath, categories_filepath):
     '''
     returns a merged dataframe given two different datasets
     
-    INPUT: 
+    INPUT:
         messages_filepath: path to read messages csv file
         categories_filepath: path to read categories csv file
     
@@ -65,11 +65,11 @@ def clean_data(df):
     # Loop to change columns to numerical values
     for column in categories:
     
-    # Set each value to be the last character of the string
-    categories[column] = categories[column].str[-1:]
-    
-    # Convertion of column from string to numeric
-    categories[column] = pd.to_numeric(categories[column])
+        # Set each value to be the last character of the string
+        categories[column] = categories[column].str[-1:]
+
+        # Convertion of column from string to numeric
+        categories[column] = pd.to_numeric(categories[column])
     
     # Dropping the original categories column from `df`
     df.drop(columns=['categories'], inplace=True)
@@ -94,7 +94,6 @@ def save_data(df, database_filename):
     '''
     save dataframe to a sqlite database
  
-    
     INPUT: 
         df: dataframe to be saved
         database_filename: name of the database where the dataframe will be stored
@@ -108,6 +107,7 @@ def save_data(df, database_filename):
 
 
 def main():
+    
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
@@ -118,6 +118,8 @@ def main():
 
         print('Cleaning data...')
         df = clean_data(df)
+        
+        database_filepath = 'sqlite:///' + database_filepath 
         
         print('Saving data...\n    DATABASE: {}'.format(database_filepath))
         save_data(df, database_filepath)
